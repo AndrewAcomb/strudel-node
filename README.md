@@ -15,12 +15,33 @@ npm install
 ### CLI
 
 ```bash
-# Play a pattern
+# Run a .strudel file
+node cli.mjs examples/arpeggiated.strudel
+
+# Run with live-reload (re-evaluates on save)
+node cli.mjs examples/chord-pad.strudel --watch
+
+# Inline code
 node cli.mjs 'note("c3 e3 g3 c4").s("sine")'
 
 # Default pattern (triangle arpeggio)
 node cli.mjs
 ```
+
+### Song files
+
+Write Strudel patterns in `.strudel` files — they contain the same code you'd use inline or in the Strudel REPL:
+
+```
+// chord-pad.strudel
+note("<[c3,e3,g3] [f3,a3,c4] [g3,b3,d4] [a3,c4,e4]>")
+  .s("sine")
+  .gain(0.5)
+  .attack(0.1)
+  .release(0.3)
+```
+
+See `examples/` for more.
 
 ### As a library
 
