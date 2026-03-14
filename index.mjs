@@ -62,3 +62,39 @@ export async function createRepl(options = {}) {
     ...options,
   });
 }
+
+// Render a pattern for a fixed number of cycles and stop.
+// Returns a promise that resolves when all audio has finished playing.
+export async function renderCycles(code, numCycles, options = {}) {
+  const ac = getAudioContext();
+  const cps = options.cps ?? 0.5;
+  const r = await createRepl();
+
+  // Evaluate without starting the live scheduler.
+  // evaluate() returns the pattern directly (a Pattern instance).
+  const pattern = await r.evaluate(code, false);
+  if (!pattern || !pattern._Pattern) {
+    throw new Error('Code did not produce a pattern');
+  }
+
+  const haps = pattern.queryArc(0, numCycles);
+  const startTime = ac.currentTime + 0.1;
+  let lastEndTime = startTime;
+
+  for (const hap of haps) {
+    if (!hap.whole) continue;
+    const begin = Number(hap.whole.begin);
+    const end = Number(hap.whole.end);
+    const hapDuration = end - begin;
+    const t = startTime + begin / cps;
+    const endTime = startTime + end / cps;
+
+    nodeAudioOutput(hap, 0, hapDuration, cps, t);
+
+    if (endTime > lastEndTime) lastEndTime = endTime;
+  }
+
+  const totalMs = (lastEndTime - ac.currentTime) * 1000 + 500;
+  console.log(`rendering ${haps.length} events over ${numCycles} cycles (${(totalMs / 1000).toFixed(1)}s)`);
+  await new Promise((resolve) => setTimeout(resolve, Math.max(0, totalMs)));
+}

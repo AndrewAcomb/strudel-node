@@ -1,0 +1,9 @@
+// A simple song with intro, verse, and outro using arrange()
+// Run with: node cli.mjs examples/song.strudel --cycles 16
+
+arrange(
+  [4, note("c3 e3 g3 c4").s("sine").gain(0.3)],
+  [4, note("c3 e3 g3 c4").s("triangle").gain(0.5).fast(2)],
+  [4, note("<[c3,e3,g3] [f3,a3,c4] [g3,b3,d4]>").s("sine").gain(0.6)],
+  [4, note("c3 e3 g3 c4").s("sine").gain(0.3).slow(2)]
+)
