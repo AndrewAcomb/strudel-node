@@ -1,0 +1,4 @@
+// Arpeggiated chords with a sine bass
+note("c3 e3 g3 c4 g3 e3")
+  .s("triangle")
+  .gain(0.6)

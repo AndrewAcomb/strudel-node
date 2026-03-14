@@ -1,0 +1,5 @@
+// Minimal techno-ish pattern
+s("square square:2 square square:3")
+  .note("c2 c2 eb2 c2")
+  .gain(0.4)
+  .fast(2)
