@@ -15,10 +15,16 @@ npm install
 ### CLI
 
 ```bash
-# Run a .strudel file
+# Run a .strudel file (loops forever)
 node cli.mjs examples/arpeggiated.strudel
 
-# Run with live-reload (re-evaluates on save)
+# Play a fixed number of cycles then stop
+node cli.mjs examples/song.strudel --cycles 16
+
+# Set tempo (default 0.5 = 120bpm)
+node cli.mjs examples/song.strudel --cycles 16 --cps 1
+
+# Live-reload on file save
 node cli.mjs examples/chord-pad.strudel --watch
 
 # Inline code
@@ -41,6 +47,18 @@ note("<[c3,e3,g3] [f3,a3,c4] [g3,b3,d4] [a3,c4,e4]>")
   .release(0.3)
 ```
 
+Use `arrange()` to sequence sections into a full song:
+
+```
+// song.strudel — run with: node cli.mjs examples/song.strudel --cycles 16
+arrange(
+  [4, note("c3 e3 g3 c4").s("sine").gain(0.3)],
+  [4, note("c3 e3 g3 c4").s("triangle").gain(0.5).fast(2)],
+  [4, note("<[c3,e3,g3] [f3,a3,c4] [g3,b3,d4]>").s("sine").gain(0.6)],
+  [4, note("c3 e3 g3 c4").s("sine").gain(0.3).slow(2)]
+)
+```
+
 See `examples/` for more.
 
 ### As a library
@@ -58,6 +76,21 @@ await repl.evaluate('note("c2 eb2 g2 bb2").s("sawtooth").gain(0.4)', true);
 
 // Stop
 repl.stop();
+```
+
+### Render mode (play once)
+
+```js
+import { renderCycles } from './index.mjs';
+
+// Play 16 cycles of a song and exit
+await renderCycles(`
+  arrange(
+    [4, note("c3 e3 g3 c4").s("sine").gain(0.3)],
+    [4, note("c3 e3 g3 c4").s("triangle").fast(2)],
+    [8, note("<[c3,e3,g3] [f3,a3,c4]>").s("sine")]
+  )
+`, 16, { cps: 0.5 });
 ```
 
 ### Custom sounds
