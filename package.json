@@ -1,0 +1,31 @@
+{
+  "name": "strudel-node",
+  "version": "0.1.0",
+  "description": "Node.js runtime for Strudel live coding with real audio output",
+  "type": "module",
+  "main": "index.mjs",
+  "bin": {
+    "strudel-node": "cli.mjs"
+  },
+  "scripts": {
+    "start": "node cli.mjs",
+    "test": "node test.mjs",
+    "postinstall": "node postinstall.mjs"
+  },
+  "keywords": [
+    "strudel",
+    "live-coding",
+    "music",
+    "algorave",
+    "node"
+  ],
+  "license": "AGPL-3.0-or-later",
+  "dependencies": {
+    "@kabelsalat/web": "^0.4.1",
+    "@strudel/core": "^1.2.6",
+    "@strudel/mini": "^1.2.6",
+    "@strudel/tonal": "^1.2.6",
+    "@strudel/transpiler": "^1.2.6",
+    "node-web-audio-api": "^1.0.8"
+  }
+}

@@ -1,0 +1,89 @@
+# strudel-node
+
+Node.js runtime for [Strudel](https://strudel.cc), a live coding environment for music. Plays audio directly through your system speakers — no browser required.
+
+Built on [node-web-audio-api](https://github.com/ircam-ismm/node-web-audio-api) for native audio output and the full Strudel pattern engine (transpiler, mini notation, tonal helpers).
+
+## Install
+
+```
+npm install
+```
+
+## Usage
+
+### CLI
+
+```bash
+# Play a pattern
+node cli.mjs 'note("c3 e3 g3 c4").s("sine")'
+
+# Default pattern (triangle arpeggio)
+node cli.mjs
+```
+
+### As a library
+
+```js
+import { createRepl } from './index.mjs';
+
+const repl = await createRepl();
+
+// Evaluate and play a pattern
+await repl.evaluate('note("c3 e3 g3 c4").s("triangle")', true);
+
+// Swap to a new pattern (replaces the previous one)
+await repl.evaluate('note("c2 eb2 g2 bb2").s("sawtooth").gain(0.4)', true);
+
+// Stop
+repl.stop();
+```
+
+### Custom sounds
+
+```js
+import { createRepl, registerSound } from './index.mjs';
+import { OscillatorNode, GainNode } from 'node-web-audio-api';
+
+registerSound('mybass', (ac, t, value, duration) => {
+  const osc = new OscillatorNode(ac, { type: 'sawtooth', frequency: 80 });
+  const gain = new GainNode(ac, { gain: 0.5 });
+  osc.connect(gain);
+  osc.start(t);
+  osc.stop(t + duration);
+  return gain;
+});
+
+const repl = await createRepl();
+await repl.evaluate('s("mybass").fast(4)', true);
+```
+
+## What works
+
+- **Synths**: `sine`, `triangle`, `square`, `sawtooth` (+ aliases `sin`, `tri`, `sqr`, `saw`), `noise`
+- **Envelopes**: `attack`, `decay`, `sustain`, `release`
+- **Pitch**: `note()`, `freq()`, `n()`
+- **Effects**: `cutoff`/`resonance` (lowpass), `hcutoff`/`hresonance` (highpass), `pan`
+- **Pattern functions**: Everything from `@strudel/core`, `@strudel/mini`, `@strudel/tonal` — `fast`, `slow`, `rev`, `jux`, `scale`, chords, arpeggios, etc.
+
+## What doesn't work (yet)
+
+- **Samples** — no sample loading/playback; only synthesized sounds
+- **AudioWorklet effects** — `crush`, `shape`, `coarse`, `supersaw`, `pulse` (these need worklet loading adapted for Node.js)
+- **MIDI output**
+- **OSC output**
+- **Visualization** — `pianoroll`, `scope`, etc. are stubbed to no-ops
+
+## How it works
+
+Strudel's architecture cleanly separates pattern evaluation from audio output:
+
+1. **Pattern engine** (`@strudel/core`) generates timed events ("haps")
+2. **Cyclist** (scheduler) queries patterns and fires triggers at the right time
+3. **Audio output** receives each hap and synthesizes sound
+
+This project replaces step 3 with a Node.js-compatible implementation using `node-web-audio-api`, which provides the Web Audio API backed by native audio (via Rust). The pattern engine and scheduler run unmodified.
+
+## License
+
+AGPL-3.0-or-later (matching Strudel)
