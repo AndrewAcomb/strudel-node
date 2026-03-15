@@ -1,19 +1,9 @@
 #!/usr/bin/env node
 
-// CLI entry point for strudel-node.
-//
-// Usage:
-//   strudel-node song.strudel                # run a file (loops forever)
-//   strudel-node song.strudel --watch        # run + reload on changes
-//   strudel-node song.strudel --cycles 16    # play 16 cycles then stop
-//   strudel-node 'note("c3 e3").s("sine")'   # inline code
-//   strudel-node                              # default demo pattern
-
 import { readFileSync, watchFile, unwatchFile, existsSync } from 'fs';
 import { resolve } from 'path';
-import { createRepl, renderCycles } from './index.mjs';
+import { createRepl, renderCycles, samples } from './index.mjs';
 
-// Parse flags
 const args = process.argv.slice(2);
 const flags = new Set();
 const params = {};
@@ -26,6 +16,9 @@ for (let i = 0; i < args.length; i++) {
     params.cycles = parseInt(args[++i], 10);
   } else if (args[i] === '--cps') {
     params.cps = parseFloat(args[++i]);
+  } else if (args[i] === '--samples' || args[i] === '-s') {
+    if (!params.samples) params.samples = [];
+    params.samples.push(args[++i]);
   } else {
     positional.push(args[i]);
   }
@@ -49,19 +42,19 @@ const isFile = typeof loaded === 'object';
 const code = isFile ? loaded.code : loaded;
 const filePath = isFile ? loaded.file : null;
 
-if (filePath) {
-  console.log(`strudel-node | ${filePath}`);
-} else {
-  console.log(`strudel-node | ${code}`);
+console.log(`strudel-node | ${filePath || code}`);
+
+if (params.samples) {
+  for (const src of params.samples) {
+    await samples(src);
+  }
 }
 
-// Render mode: play N cycles then exit
 if (params.cycles) {
   await renderCycles(code, params.cycles, { cps: params.cps });
   process.exit(0);
 }
 
-// Live mode: loop forever
 const r = await createRepl();
 
 async function run(code) {
