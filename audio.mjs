@@ -10,7 +10,9 @@ import {
   GainNode,
   BiquadFilterNode,
   StereoPannerNode,
+  AudioBufferSourceNode,
 } from 'node-web-audio-api';
+import { getSampleBuffer, hasSample } from './samples.mjs';
 
 let audioContext;
 
@@ -172,6 +174,45 @@ function applyPan(ac, source, value) {
   return source;
 }
 
+// Sample playback — triggered when s("name") matches a loaded sample
+
+function playSample(ac, t, value, durationSecs) {
+  const n = value.n ?? 0;
+  const buffer = getSampleBuffer(value.s, n);
+  if (!buffer) return null;
+
+  const gain = (value.gain ?? 0.8) * (value.velocity ?? 1);
+  const attack = value.attack ?? 0.001;
+  const release = value.release ?? 0.01;
+  const speed = value.speed ?? 1;
+  const begin = value.begin ?? 0;
+  const end = value.end ?? 1;
+
+  const source = new AudioBufferSourceNode(ac, { buffer });
+  source.playbackRate.value = speed;
+
+  // Calculate offset and duration from begin/end (0-1 range)
+  const bufferDuration = buffer.duration;
+  const offsetSecs = begin * bufferDuration;
+  const clipDuration = (end - begin) * bufferDuration / Math.abs(speed);
+  const playDuration = Math.min(durationSecs, clipDuration);
+
+  const env = new GainNode(ac, { gain: 0 });
+  const vol = new GainNode(ac, { gain: gain * 0.3 });
+
+  source.connect(env).connect(vol);
+
+  const holdEnd = t + playDuration;
+  env.gain.setValueAtTime(0, t);
+  env.gain.linearRampToValueAtTime(1, t + attack);
+  env.gain.setValueAtTime(1, holdEnd);
+  env.gain.linearRampToValueAtTime(0, holdEnd + release);
+
+  source.start(t, offsetSecs, playDuration + release + 0.01);
+
+  return vol;
+}
+
 // Main output function — called by the Strudel scheduler for each hap
 
 export function nodeAudioOutput(hap, _deadline, hapDuration, cps, t) {
@@ -192,11 +233,14 @@ export function nodeAudioOutput(hap, _deadline, hapDuration, cps, t) {
   const s = (value.s || 'triangle').toLowerCase();
   const durationSecs = hapDuration / cps;
 
-  // Look up the sound, falling back to waveform resolution
+  // Look up the sound: registered synth → waveform alias → loaded sample
   let triggerFn = soundRegistry.get(s);
   if (!triggerFn) {
     const wf = resolveWaveform(s);
     if (wf) triggerFn = soundRegistry.get(wf);
+  }
+  if (!triggerFn && hasSample(s)) {
+    triggerFn = playSample;
   }
   if (!triggerFn) return;
 

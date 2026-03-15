@@ -30,6 +30,9 @@ node cli.mjs examples/chord-pad.strudel --watch
 # Inline code
 node cli.mjs 'note("c3 e3 g3 c4").s("sine")'
 
+# Load samples from a directory and play a beat
+node cli.mjs examples/beat.strudel --samples samples
+
 # Default pattern (triangle arpeggio)
 node cli.mjs
 ```
@@ -93,6 +96,51 @@ await renderCycles(`
 `, 16, { cps: 0.5 });
 ```
 
+### Samples
+
+Load audio samples (wav, mp3, ogg, flac) from a directory or JSON map:
+
+```bash
+# Via CLI flag
+node cli.mjs 's("bd hh sn hh")' --samples /path/to/dirt-samples
+
+# Or in .strudel code (use single quotes — double quotes become mini notation)
+await samples('/path/to/dirt-samples')
+s("bd hh sn hh")
+```
+
+Sample directories should be organized as `dir/sampleName/file0.wav`:
+
+```
+samples/
+  bd/
+    bd0.wav
+    bd1.wav
+  hh/
+    hh0.wav
+    hh1.wav
+  sn/
+    sn0.wav
+```
+
+Use `n()` to select sample variants: `s("bd").n(1)` plays `bd1.wav`.
+
+You can also load from a JSON map:
+
+```js
+await samples('samples.json')  // { "bd": ["bd/bd0.wav", "bd/bd1.wav"], ... }
+```
+
+Or as a library:
+
+```js
+import { createRepl, samples } from './index.mjs';
+
+await samples('/path/to/samples');
+const repl = await createRepl();
+await repl.evaluate('s("bd hh sn hh")', true);
+```
+
 ### Custom sounds
 
 ```js
@@ -114,6 +162,7 @@ await repl.evaluate('s("mybass").fast(4)', true);
 
 ## What works
 
+- **Samples**: Load wav/mp3/ogg/flac from directories or JSON maps; `s("bd")`, `n()` for variants, `speed`, `begin`/`end` for slicing
 - **Synths**: `sine`, `triangle`, `square`, `sawtooth` (+ aliases `sin`, `tri`, `sqr`, `saw`), `noise`
 - **Envelopes**: `attack`, `decay`, `sustain`, `release`
 - **Pitch**: `note()`, `freq()`, `n()`
@@ -122,7 +171,6 @@ await repl.evaluate('s("mybass").fast(4)', true);
 
 ## What doesn't work (yet)
 
-- **Samples** — no sample loading/playback; only synthesized sounds
 - **AudioWorklet effects** — `crush`, `shape`, `coarse`, `supersaw`, `pulse` (these need worklet loading adapted for Node.js)
 - **MIDI output**
 - **OSC output**

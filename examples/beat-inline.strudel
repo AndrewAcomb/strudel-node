@@ -1,0 +1,4 @@
+// Beat with inline sample loading
+// Run with: node cli.mjs examples/beat-inline.strudel --cycles 4
+await samples('samples')
+s("bd hh sn hh").fast(2)

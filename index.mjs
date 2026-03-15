@@ -13,8 +13,10 @@ import { transpiler } from '@strudel/transpiler';
 import { mini, m } from '@strudel/mini/mini.mjs';
 import * as tonalHelpers from '@strudel/tonal';
 import { getAudioContext, nodeAudioOutput, registerSound } from './audio.mjs';
+import { samples, listSamples } from './samples.mjs';
 
 export { getAudioContext, nodeAudioOutput, registerSound } from './audio.mjs';
+export { samples, listSamples } from './samples.mjs';
 
 // Populate the eval scope with all strudel functions
 await evalScope(
@@ -25,6 +27,8 @@ await evalScope(
     m,
     getAudioContext,
     registerSound,
+    samples,
+    listSamples,
     // Stubs for browser-only APIs that patterns may reference
     loadSoundfont: () => {},
     getDrawContext: () => ({
