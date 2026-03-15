@@ -1,12 +1,3 @@
-// Strudel Node.js runtime.
-//
-// Provides a complete Strudel REPL that outputs real audio via node-web-audio-api.
-//
-// Usage:
-//   import { createRepl } from 'strudel-node';
-//   const repl = await createRepl();
-//   await repl.evaluate('note("c3 e3 g3 c4").s("sine")');
-
 import { repl, evalScope, Pattern } from '@strudel/core';
 import * as strudel from '@strudel/core';
 import { transpiler } from '@strudel/transpiler';
@@ -18,7 +9,6 @@ import { samples, listSamples } from './samples.mjs';
 export { getAudioContext, nodeAudioOutput, registerSound } from './audio.mjs';
 export { samples, listSamples } from './samples.mjs';
 
-// Populate the eval scope with all strudel functions
 await evalScope(
   strudel,
   tonalHelpers,
@@ -29,7 +19,6 @@ await evalScope(
     registerSound,
     samples,
     listSamples,
-    // Stubs for browser-only APIs that patterns may reference
     loadSoundfont: () => {},
     getDrawContext: () => ({
       clearRect: () => {},
@@ -40,7 +29,6 @@ await evalScope(
   },
 );
 
-// Stub browser-only pattern methods so they pass through without errors
 const BROWSER_ONLY_METHODS = [
   'pianoroll', '_pianoroll', '_scope', '_spiral', '_spectrum', '_pitchwheel',
   'scope', 'wave', 'midi', 'csound', 'soundfont', 'osc',
@@ -67,15 +55,12 @@ export async function createRepl(options = {}) {
   });
 }
 
-// Render a pattern for a fixed number of cycles and stop.
-// Returns a promise that resolves when all audio has finished playing.
 export async function renderCycles(code, numCycles, options = {}) {
   const ac = getAudioContext();
   const cps = options.cps ?? 0.5;
   const r = await createRepl();
 
-  // Evaluate without starting the live scheduler.
-  // evaluate() returns the pattern directly (a Pattern instance).
+  // evaluate() returns the Pattern directly, not wrapped
   const pattern = await r.evaluate(code, false);
   if (!pattern || !pattern._Pattern) {
     throw new Error('Code did not produce a pattern');
